@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toobit Trading Bot Status</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h1 class="card-title">
+                            <i class="fas fa-robot me-2"></i>
+                            Toobit Trading Bot
+                        </h1>
+                        <p class="card-text text-muted">USDT-M Futures Trading Bot Status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bot Status -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-heartbeat me-2"></i>
+                            Bot Health
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            {% if bots_initialized %}
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span>Operational</span>
+                            {% else %}
+                                <span class="badge bg-danger me-2">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                                <span>Error</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-comments me-2"></i>
+                            Telegram Bot
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            {% if bots_initialized %}
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span>Connected</span>
+                            {% else %}
+                                <span class="badge bg-danger me-2">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                                <span>Disconnected</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Trade Bot
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            {% if trade_bot_active %}
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span>Active</span>
+                            {% else %}
+                                <span class="badge bg-warning me-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                                <span>Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if current_config %}
+        <!-- Current Configuration -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cog me-2"></i>
+                            Current Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Basic Settings -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Basic Settings</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><i class="fas fa-coins me-2"></i>Pair:</td>
+                                        <td>
+                                            {% if current_config.pair %}
+                                                <span class="badge bg-primary">{{ current_config.pair }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not set</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-arrow-up me-2"></i>Side:</td>
+                                        <td>
+                                            {% if current_config.side %}
+                                                <span class="badge bg-{% if current_config.side == 'long' %}success{% else %}danger{% endif %}">
+                                                    {{ current_config.side.upper() }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">Not set</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-dollar-sign me-2"></i>Amount:</td>
+                                        <td>{{ current_config.amount or 'Not set' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-bullseye me-2"></i>Entry:</td>
+                                        <td>{{ current_config.entry_price or 'Not set' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-level-up-alt me-2"></i>Leverage:</td>
+                                        <td>{{ current_config.leverage }}x</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-stop-circle me-2"></i>Stop Loss:</td>
+                                        <td>{{ current_config.sl_price or 'Not set' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- Take Profits -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Take Profits</h6>
+                                <table class="table table-sm">
+                                    {% if current_config.tp1_price %}
+                                    <tr>
+                                        <td><i class="fas fa-target me-2"></i>TP1:</td>
+                                        <td>
+                                            {{ current_config.tp1_price }} 
+                                            <span class="badge bg-info">{{ current_config.tp1_percent }}%</span>
+                                            {% if current_config.tp1_filled %}
+                                                <i class="fas fa-check text-success ms-1"></i>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    {% if current_config.tp2_price %}
+                                    <tr>
+                                        <td><i class="fas fa-target me-2"></i>TP2:</td>
+                                        <td>
+                                            {{ current_config.tp2_price }} 
+                                            <span class="badge bg-info">{{ current_config.tp2_percent }}%</span>
+                                            {% if current_config.tp2_filled %}
+                                                <i class="fas fa-check text-success ms-1"></i>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    {% if current_config.tp3_price %}
+                                    <tr>
+                                        <td><i class="fas fa-target me-2"></i>TP3:</td>
+                                        <td>
+                                            {{ current_config.tp3_price }} 
+                                            <span class="badge bg-info">{{ current_config.tp3_percent }}%</span>
+                                            {% if current_config.tp3_filled %}
+                                                <i class="fas fa-check text-success ms-1"></i>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    {% if not (current_config.tp1_price or current_config.tp2_price or current_config.tp3_price) %}
+                                    <tr>
+                                        <td colspan="2" class="text-muted">No take profits set</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                                
+                                <h6 class="text-muted mb-3 mt-4">Advanced Features</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><i class="fas fa-balance-scale me-2"></i>Break-even:</td>
+                                        <td>
+                                            {% if current_config.breakeven_enabled %}
+                                                <span class="badge bg-warning">{{ current_config.breakeven_trigger.upper() }}</span>
+                                                {% if current_config.breakeven_moved %}
+                                                    <i class="fas fa-check text-success ms-1"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Disabled</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-chart-line me-2"></i>Trailing Stop:</td>
+                                        <td>
+                                            {% if current_config.trailing_stop_enabled %}
+                                                <span class="badge bg-info">{{ current_config.trailing_stop_percent }}%</span>
+                                                {% if current_config.trailing_active %}
+                                                    <i class="fas fa-fire text-warning ms-1"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Disabled</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Trading Status -->
+        {% if trade_status %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Trading Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h6 class="text-muted">Monitoring</h6>
+                                    <div class="h4">
+                                        {% if trade_status.monitoring %}
+                                            <span class="text-success"><i class="fas fa-eye"></i></span>
+                                        {% else %}
+                                            <span class="text-muted"><i class="fas fa-eye-slash"></i></span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h6 class="text-muted">Entry Filled</h6>
+                                    <div class="h4">
+                                        {% if trade_status.entry_filled %}
+                                            <span class="text-success"><i class="fas fa-check-circle"></i></span>
+                                        {% else %}
+                                            <span class="text-muted"><i class="fas fa-clock"></i></span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h6 class="text-muted">Active Orders</h6>
+                                    <div class="h4 text-info">{{ trade_status.current_orders or 0 }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="text-center p-3 border rounded">
+                                    <h6 class="text-muted">Position Size</h6>
+                                    <div class="h4 text-primary">{{ trade_status.position_size or 'N/A' }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if trade_status.entry_filled %}
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center p-2">
+                                    <small class="text-muted">TP1 Status</small>
+                                    <div>
+                                        {% if trade_status.tp1_filled %}
+                                            <span class="badge bg-success">Filled</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="text-center p-2">
+                                    <small class="text-muted">TP2 Status</small>
+                                    <div>
+                                        {% if trade_status.tp2_filled %}
+                                            <span class="badge bg-success">Filled</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="text-center p-2">
+                                    <small class="text-muted">TP3 Status</small>
+                                    <div>
+                                        {% if trade_status.tp3_filled %}
+                                            <span class="badge bg-success">Filled</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            {% if current_config and not trade_bot_active %}
+                                <button class="btn btn-success me-md-2" onclick="placeTrade()">
+                                    <i class="fas fa-rocket me-1"></i>
+                                    Place Trade
+                                </button>
+                            {% endif %}
+                            
+                            {% if trade_bot_active %}
+                                <button class="btn btn-danger me-md-2" onclick="cancelTrade()">
+                                    <i class="fas fa-stop me-1"></i>
+                                    Cancel Trade
+                                </button>
+                            {% endif %}
+                            
+                            <button class="btn btn-primary me-md-2" onclick="refreshStatus()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                            
+                            <button class="btn btn-secondary" onclick="resetConfig()">
+                                <i class="fas fa-undo me-1"></i>
+                                Reset Config
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Environment Info -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Environment Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <strong>Mode:</strong> 
+                                    {% if current_config and current_config.dry_run %}
+                                        <span class="badge bg-warning">DRY RUN</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">LIVE TRADING</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <strong>Exchange:</strong> Toobit (USDT-M Futures)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-2">Required Environment Variables:</h6>
+                                <small class="text-muted">
+                                    • TELEGRAM_BOT_TOKEN - Telegram bot token<br>
+                                    • TOOBIT_API_KEY - Exchange API key<br>
+                                    • TOOBIT_API_SECRET - Exchange API secret<br>
+                                    • WEBHOOK_URL - Public webhook URL (optional)<br>
+                                    • TOOBIT_TESTNET - Use testnet (true/false)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for API calls -->
+    <script>
+        async function placeTrade() {
+            try {
+                const response = await fetch('/api/place_trade', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('Error placing trade: ' + error.message);
+            }
+        }
+
+        async function cancelTrade() {
+            if (confirm('Are you sure you want to cancel the active trade?')) {
+                try {
+                    const response = await fetch('/api/cancel_trade', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('✅ ' + data.message);
+                        location.reload();
+                    } else {
+                        alert('❌ ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Error cancelling trade: ' + error.message);
+                }
+            }
+        }
+
+        function refreshStatus() {
+            location.reload();
+        }
+
+        function resetConfig() {
+            if (confirm('Are you sure you want to reset the configuration? This will clear all settings.')) {
+                // This would need an API endpoint to reset config
+                alert('Reset functionality can be implemented via API endpoint');
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshStatus, 30000);
+    </script>
+</body>
+</html>
